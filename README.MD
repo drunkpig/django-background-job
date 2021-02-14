@@ -17,3 +17,6 @@ include all features of apscheduler and django-apscheduler, but more than that:
 
 
 
+## references
+
+- [django-background-task](https://github.com/lilspikey/django-background-task)
