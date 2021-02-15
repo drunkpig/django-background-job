@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 import logging
+import queue
 import random
 import sys
 import time
 from importlib import import_module
+from logging.config import fileConfig
 
 from django import VERSION
 from django.core.management.base import BaseCommand
 from django.utils import autoreload
 
-
+from background_job.Scheduler import Scheduler
+fileConfig("logging.ini")
 logger = logging.getLogger(__name__)
 
 
@@ -23,6 +26,7 @@ class Command(BaseCommand):
 
     def run(self, *args, **options):
         autodiscover()
+        start_job_processor()
 
     def handle(self, *args, **options):
         self.run(*args, **options)
@@ -45,3 +49,8 @@ def autodiscover():
 
         import_module("%s.jobs" % app)
         logger.info("load module %s.jobs", app)
+
+
+def start_job_processor():
+    sched = Scheduler(queue=queue.Queue())
+    sched.start()

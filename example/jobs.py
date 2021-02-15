@@ -1,15 +1,19 @@
 from job import cron_job
 
 
-@cron_job(name="my_func", cron="* */2 * * *")
+@cron_job(name="my_func3", cron="*/1 * * * *")
+def my_func3():
+    print("my_func3()")
+
+
+@cron_job(name="my_func", cron="*/2 * * * *", args=('X parameter',), kwargs={"name":"Xu", "age":33})
 def my_func(x, name="jon", age=20):
-    print("Inside actual function")
-    print(f"name={name}, age={age}")
+    print(f"my_func(x={x}, name={name}, age={age})")
 
 
-@cron_job(name="my_func2", cron="* */6 * * *")
+@cron_job(name="my_func2", cron="*/1 * * * *")
 def my_func2():
-    print("Inside actual xxxx function")
+    print("my_func2()")
 
 
 # if __name__=="__main__":

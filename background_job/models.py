@@ -1,10 +1,11 @@
 import datetime
 
-from apscheduler.triggers.cron import CronTrigger
 from django.db import models
 
 # Create your models here.
 from django.utils.safestring import mark_safe
+
+from background_job.CronJobTrigger import CronJobTrigger
 
 
 class DjangoJob(models.Model):
@@ -14,14 +15,14 @@ class DjangoJob(models.Model):
     id = models.CharField(max_length=64, primary_key=True)
     job_name = models.CharField(max_length=128)  # 任务名字
     description = models.TextField(blank=True, null=True)  # job作用描述
-    job_function = models.CharField(max_length=128)  # 任务的函数名称
-    job_parameters = models.TextField(blank=True)
+    job_function = models.CharField(max_length=128, )  # 任务的函数名称
+    job_parameters = models.TextField(blank=True, )
     trigger_type = models.CharField(max_length=128, choices=[["cron","cron"],["interval",'interval'],
                                                          ['once','once'],['delayedjob', 'delayedjob']]) # cron, delayedjob, interval, once
     trigger_expression = models.CharField(max_length=128) # cron表达式
     max_instances = models.IntegerField(default=1)
-    allow_parallel = models.BooleanField(default=False)
     misfire_grace_time = models.IntegerField(default=0)
+    coalesce = models.BooleanField(default=False) # 是否把错过的全都执行一遍
     log_succ_interval = models.IntegerField(default=0) # 由于成功是大概率，为了减少写库压力可设置间隔多久记录一次成功日志,0则一直写
     log_err_interval = models.IntegerField(default=0)  # 如果遇到连续失败，记录策略
 
@@ -32,9 +33,12 @@ class DjangoJob(models.Model):
         ordering = ('gmt_update', )
 
     def next_run_time(self):
-        # TODO 根据 trigger_type
-        trigger:CronTrigger = CronTrigger.from_crontab(self.trigger_expression)
-        return trigger.get_next_fire_time()
+        if self.trigger_type=='cron':
+            trigger:CronJobTrigger = CronJobTrigger.from_crontab(self.trigger_expression)
+            seconds, dt = trigger.get_next_fire_time()
+            return seconds, dt
+        else:
+            raise Exception("*********没有实现的trigger type")# TODO 根据 trigger_type
 
 
 class JobExecHistory(models.Model):
