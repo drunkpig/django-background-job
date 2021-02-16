@@ -5,7 +5,7 @@ from django.db.models import Avg
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
-from .models import DjangoJob, JobExecHistory
+from .models import DjangoJob, JobExecHistory, DelayedJob
 
 
 @admin.register(DjangoJob)
@@ -19,6 +19,20 @@ class DjangoJobAdmin(admin.ModelAdmin):
 
     def job_name_html(self, obj):
         link = reverse("admin:background_job_djangojob_change", args=[obj.id])
+        return format_html('<a href="{}">{}</a>', link, obj.job_name)
+
+    job_name_html.short_description="Job Name"
+
+
+@admin.register(DelayedJob)
+class DelayedJobAdmin(admin.ModelAdmin):
+    list_display = ["job_name_html",  "job_function",  "job_parameters",
+                    "retry", "retry_cnt",
+                    "gmt_update", "gmt_created"]
+    actions = []
+
+    def job_name_html(self, obj):
+        link = reverse("admin:background_job_delayedjob_change", args=[obj.id])
         return format_html('<a href="{}">{}</a>', link, obj.job_name)
 
     job_name_html.short_description="Job Name"

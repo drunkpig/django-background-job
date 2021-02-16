@@ -41,6 +41,22 @@ class DjangoJob(models.Model):
             raise Exception("*********没有实现的trigger type")# TODO 根据 trigger_type
 
 
+class DelayedJob(models.Model):
+    id = models.AutoField(primary_key=True)
+    job_name = models.CharField(max_length=128)  # 任务名字
+    description = models.TextField(blank=True, null=True)  # job作用描述
+    job_function = models.CharField(max_length=128, )  # 任务的函数名称
+    job_parameters = models.TextField(blank=True, )
+    retry = models.IntegerField(default=0)
+    retry_cnt = models.IntegerField(default=0)
+
+    gmt_update = models.DateTimeField(auto_now=True)  # 最后更新时间
+    gmt_created = models.DateTimeField(auto_now_add=True)  # 创建时间
+
+    class Meta:
+        ordering = ('gmt_update', )
+
+
 class JobExecHistory(models.Model):
     """
     定时任务执行情况
