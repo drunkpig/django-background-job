@@ -10,7 +10,7 @@ def md5(astring):
     return x
 
 
-def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_time=0, coalesce=False,
+def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_time=3, coalesce=False,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     """
 
@@ -30,20 +30,15 @@ def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_tim
                    "log_succ_interval":log_succ_interval, "log_err_interval":log_err_interval,}
         DjangoJob.objects.update_or_create(id=job_id,
                                            defaults=values)
-        # print( inspect.getfullargspec(func))
-        #
-        # print(inspect.getmodule(func))
-        # print(inspect.signature(func))
 
         @functools.wraps(func)
         def real_func(*args, **kwargs):
             func(*args, **kwargs)
-
         return real_func
     return inner
 
 
-def cron_job(name, cron,  max_instances=1, misfire_grace_time=0, coalesce=False,
+def cron_job(name, cron,  max_instances=1, misfire_grace_time=2, coalesce=False,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     """
     name: 任务名称，自己随便写
@@ -58,18 +53,20 @@ def cron_job(name, cron,  max_instances=1, misfire_grace_time=0, coalesce=False,
                    description=description, args=args, kwargs=kwargs)
 
 
-def interval_job(name, interval_exp,
-                 max_instances=1, misfire_grace_time=0, coalesce=False,
-             log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
+def interval_job(name, weeks=0, days=0, hours=0, minutes=0, seconds=0, start_date=None, end_date=None,
+                 max_instances=1, misfire_grace_time=2, coalesce=False,
+                 log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
+    interval_exp = json.dumps({"weeks":weeks,"days":days,"hours":hours,"minutes":minutes,"seconds":seconds,
+                               "start_date":start_date,"end_date":end_date,})
     return __x_job(name, 'interval', interval_exp, max_instances=max_instances,
                    misfire_grace_time=misfire_grace_time, coalesce=coalesce,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)
 
 
-def once_job(name, once_exp,  max_instances=1, misfire_grace_time=0, coalesce=False,
+def once_job(name, run_at,  max_instances=1, misfire_grace_time=2, coalesce=False,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
-    return __x_job(name, 'once', once_exp, max_instances=max_instances,
+    return __x_job(name, 'once', run_at, max_instances=max_instances,
                    misfire_grace_time=misfire_grace_time, coalesce=coalesce,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)

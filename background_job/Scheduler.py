@@ -38,6 +38,12 @@ class Scheduler(threading.Thread):
 
     def __lunch_job(self, job):
         seconds_to_wait, _ = job.next_run_time()
+        if seconds_to_wait<0 and abs(seconds_to_wait)<=job.misfire_grace_time:
+            seconds_to_wait = 0
+        elif seconds_to_wait<0:
+            # TODO 根据记录决定是否记录
+            logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait, job.misfire_grace_time)
+            return
         logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
         self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job, ))
 
@@ -49,7 +55,7 @@ class Scheduler(threading.Thread):
             self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job,))
             logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
 
-        parameters = json.loads(job.job_parameters)
+        parameters = json.loads(job.job_parameters) # TODO 避免直接call, 这里为了测试
         self.__call(job.job_function, *parameters['args'], **parameters['kwargs'])
 
     def __call(self, function_string, *args, **kwargs):
@@ -57,5 +63,3 @@ class Scheduler(threading.Thread):
         mod = importlib.import_module(mod_name)
         func = getattr(mod, func_name)
         result = func(*args, **kwargs)
-
-
