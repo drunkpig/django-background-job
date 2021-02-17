@@ -1,9 +1,10 @@
 import json
 import logging
+import queue
 import threading
 import time
 from queue import Queue
-import importlib
+
 import sched
 
 from background_job.models import DjangoJob
@@ -48,18 +49,16 @@ class Scheduler(threading.Thread):
         self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job, ))
 
     def __fire_job(self, job):
-        # self.queue.put(job, block=True)
+        try:
+            self.queue.put_nowait(job)
+        except queue.Full as e:
+            logger.exception(e)
+            # TODO log job missed!
+        except Exception as e:
+            logger.exception(e)
+            # TODO log job missed!
 
         seconds_to_wait,_ = job.next_run_time()
         if seconds_to_wait is not None and seconds_to_wait>0:
             self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job,))
             logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
-
-        parameters = json.loads(job.job_parameters) # TODO 避免直接call, 这里为了测试
-        self.__call(job.job_function, *parameters['args'], **parameters['kwargs'])
-
-    def __call(self, function_string, *args, **kwargs):
-        mod_name, func_name = function_string.rsplit('.', 1)
-        mod = importlib.import_module(mod_name)
-        func = getattr(mod, func_name)
-        result = func(*args, **kwargs)

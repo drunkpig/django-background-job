@@ -33,6 +33,6 @@ include all features of apscheduler and django-apscheduler, but more than that:
 ## TODO
 - 线程池
 - misfire_grace_time
-- 合并执行
-- 并行度
-- 异常
+- 合并执行 collease
+- 并行度 mx_instance
+- 异常, 任务隔离，记录异常

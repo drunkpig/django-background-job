@@ -11,6 +11,7 @@ from django import VERSION
 from django.core.management.base import BaseCommand
 from django.utils import autoreload
 
+from JobProcessor import JobProcessor
 from background_job.Scheduler import Scheduler
 fileConfig("logging.ini")
 logger = logging.getLogger(__name__)
@@ -52,5 +53,8 @@ def autodiscover():
 
 
 def start_job_processor():
-    sched = Scheduler(queue=queue.Queue())
+    job_queue = queue.Queue()
+    sched = Scheduler(queue=job_queue)
     sched.start()
+    processor = JobProcessor(job_queue)
+    processor.start()
