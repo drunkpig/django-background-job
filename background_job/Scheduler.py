@@ -59,6 +59,10 @@ class Scheduler(threading.Thread):
             # TODO log job missed!
 
         seconds_to_wait,_ = job.next_run_time()
-        if seconds_to_wait is not None and seconds_to_wait>0:
+        if seconds_to_wait>0 or abs(seconds_to_wait) <= job.misfire_grace_time:
             self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job,))
             logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
+        else:
+            logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait,
+                        job.misfire_grace_time)
+            # TODO log job missed!

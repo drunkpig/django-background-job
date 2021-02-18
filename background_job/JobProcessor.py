@@ -41,23 +41,29 @@ class JobProcessor(threading.Thread):
         """
         if future.cancelled():
             self.LOGGER.warning(">>>> cancelled")
+            # TODO log db
         elif future.done():
             error = future.exception()
             if error:
                 self.LOGGER.error(">>>>%s", error)
+                # TODO log db
             else:
                 result = future.result()
                 self.LOGGER.info(">>>>%s", result)
+                # TODO log db，含函数结果
         self.LOGGER.info("%s, %s", future.function_string, future.result())
 
     def __call(self, job_id, function_string, *args, **kwargs):
         """
 
         """
-        mod_name, func_name = function_string.rsplit('.', 1)
-        mod = importlib.import_module(mod_name)
-        func = getattr(mod, func_name)
-        future = self.threadpool.submit(_picklable_func(func, *args, **kwargs),  **kwargs)
-        future.function_string=function_string
-        future.add_done_callback(self.call_succ)
-        return future
+        try:
+            mod_name, func_name = function_string.rsplit('.', 1)
+            mod = importlib.import_module(mod_name)
+            func = getattr(mod, func_name)
+            future = self.threadpool.submit(_picklable_func(func, *args, **kwargs),  **kwargs)
+            future.function_string=function_string
+            future.add_done_callback(self.call_succ)
+        except Exception as e:
+            self.LOGGER.exception(e)
+            # TODO log it
