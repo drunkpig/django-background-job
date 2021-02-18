@@ -1,9 +1,10 @@
-from job import cron_job, delayed_job, interval_job, once_job
+from background_job.job import cron_job, delayed_job, interval_job, once_job
 
 
 @cron_job(name="my_func3", cron="*/1 * * * *")
 def my_func3():
     print("my_func3()")
+    return "this is func3"
 
 
 @cron_job(name="my_func", cron="*/2 * * * *", args=('X parameter',), kwargs={"name":"Xu", "age":33})
@@ -18,7 +19,8 @@ def my_func2():
 
 @interval_job(name="间隔执行", seconds=5, args=('NAME',"VALUE"))
 def interval_func(name, value):
-    print(f"delayed_job_func({name}, {value})")
+    print(f"interval_func({name}, {value})")
+    return "interval_func"
 
 
 @once_job(name="once_job只运行一次", run_at="2021-02-16 23:39:00", args=("NAME",), kwargs={"key":"KEY"})

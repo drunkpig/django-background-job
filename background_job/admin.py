@@ -40,5 +40,5 @@ class DelayedJobAdmin(admin.ModelAdmin):
 
 @admin.register(JobExecHistory)
 class DjangoJobExecAdmin(admin.ModelAdmin):
-    list_display = ["id", "job_name", "job_instance_id", "trace_message", "html_status", "duration", "start_tm", "end_tm"]
+    list_display = ["id", "job_name",  "trace_message", "html_status", "duration", "start_tm", "end_tm"]
     list_filter = ["job_name",  "status"]

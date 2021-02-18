@@ -1,23 +1,43 @@
 import threading
 from queue import Queue
-from concurrent.futures import ThreadPoolExecutor
-import importlib,json
+from concurrent.futures import ThreadPoolExecutor, Future
+import importlib, json, logging
+import multiprocessing
 
 
 class JobProcessor(threading.Thread):
+    LOGGER = logging.getLogger()
+
     def __init__(self, queue:Queue,):
         super().__init__()
         self.setDaemon(False)
         self.queue = queue
-        self.threadpool = ThreadPoolExecutor(128)
+        self.threadpool = ThreadPoolExecutor(max_workers=multiprocessing.cpu_count()*2)
 
     def run(self):
-        for job in self.queue:
-            parameters = json.loads(job.job_parameters)
-            self.__call(job.job_function, *parameters['args'], **parameters['kwargs'])
+        result_container = []
+        while True:
+            try:
+                job = self.queue.get(block=True)
+                parameters = json.loads(job.job_parameters)
+                feature = self.__call(job.id, job.job_function, *parameters['args'], **parameters['kwargs'])
 
-    def __call(self, function_string, *args, **kwargs):
+                def call_succ(future: Future):  # TODO exception
+                    self.LOGGER.info("%s, %s", job.job_function, future.result())
+
+                feature.add_done_callback(call_succ)
+                result_container.append(feature)
+            except Exception as e:
+                self.LOGGER.exception(e)
+                # TODO log db error
+
+            pass
+            pass
+
+
+    def __call(self, job_id, function_string, *args, **kwargs):
         mod_name, func_name = function_string.rsplit('.', 1)
         mod = importlib.import_module(mod_name)
         func = getattr(mod, func_name)
-        result = func(*args, **kwargs)
+        result = self.threadpool.submit(func, *args, **kwargs)
+        return result

@@ -11,7 +11,7 @@ from django import VERSION
 from django.core.management.base import BaseCommand
 from django.utils import autoreload
 
-from JobProcessor import JobProcessor
+from background_job.JobProcessor import JobProcessor
 from background_job.Scheduler import Scheduler
 fileConfig("logging.ini")
 logger = logging.getLogger(__name__)

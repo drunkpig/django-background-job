@@ -1,7 +1,6 @@
 import datetime
 import json
 
-from apscheduler.triggers.interval import IntervalTrigger
 from django.db import models
 
 # Create your models here.
@@ -70,16 +69,16 @@ class DelayedJob(models.Model):
 
 class JobExecHistory(models.Model):
     """
-    定时任务执行情况
+    任务执行情况
     """
+    NEW = "New"
     RUNNING = "Running"
     #MAX_INSTANCES = u"Max instances reached!"
     #MISSED = u"Missed!"
-    ERROR = u"Error!"
-    SUCCESS = u"Success"
+    ERROR = "Error!"
+    SUCCESS = "Success"
 
     id = models.AutoField(primary_key=True)
-    job_instance_id = models.CharField(max_length=64, unique=True)  # job实例id
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
     status = models.CharField(max_length=50, choices=[
