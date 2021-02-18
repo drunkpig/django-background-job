@@ -82,9 +82,9 @@ class JobExecHistory(models.Model):
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
     status = models.CharField(max_length=50, choices=[
-        [RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR]
+        [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR]
     ])
-
+    result = models.TextField(blank=True, verbose_name="执行返回结果")
     start_tm = models.DateTimeField(auto_now_add=True)  # job开始时间
     end_tm = models.DateTimeField(auto_now=True)  # 结束（成功|失败)时间
     trace_message = models.TextField(blank=True, verbose_name="追踪日志") # 错误记录等
