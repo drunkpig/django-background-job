@@ -15,6 +15,7 @@ class DjangoJob(models.Model):
     """
     id = models.CharField(max_length=64, primary_key=True)
     job_name = models.CharField(max_length=128)  # 任务名字
+    enable = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)  # job作用描述
     job_function = models.CharField(max_length=128, )  # 任务的函数名称
     job_parameters = models.TextField(blank=True, )
@@ -59,6 +60,7 @@ class DjangoJob(models.Model):
 class DelayedJob(models.Model):
     id = models.AutoField(primary_key=True)
     job_name = models.CharField(max_length=128)  # 任务名字
+    enable = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)  # job作用描述
     job_function = models.CharField(max_length=128, )  # 任务的函数名称
     job_parameters = models.TextField(blank=True, )

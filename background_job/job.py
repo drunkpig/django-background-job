@@ -11,7 +11,7 @@ def md5(astring):
     return x
 
 
-def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_time=3, coalesce=False,
+def __x_job(name,  trigger_type, trigger_exp, enable=True,  max_instances=1, misfire_grace_time=3, coalesce=False,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     """
 
@@ -24,7 +24,7 @@ def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_tim
                         'kwargs': dict(kwargs) if kwargs is not None else {},
         }
         values = { "job_name":name, "description":description,
-                   "job_function":mod_func, "trigger_type":trigger_type,
+                   "job_function":mod_func, "trigger_type":trigger_type, "enable":enable,
                    "job_parameters":json.dumps(job_parameters),
                    "trigger_expression":trigger_exp, "max_instances":max_instances,
                     "misfire_grace_time":misfire_grace_time, "coalesce":coalesce,
@@ -39,7 +39,7 @@ def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_tim
     return inner
 
 
-def cron_job(name, cron,  max_instances=1, misfire_grace_time=2, coalesce=False,
+def cron_job(name, cron, enable=True,  max_instances=1, misfire_grace_time=2, coalesce=False,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     """
     name: 任务名称，自己随便写
@@ -48,38 +48,38 @@ def cron_job(name, cron,  max_instances=1, misfire_grace_time=2, coalesce=False,
     max_instances: 同一次触发最大的运行个数
     misfire_grace_time: 超出执行点多久可以弥补
     """
-    return __x_job(name, 'cron', cron,  max_instances=max_instances,
+    return __x_job(name, 'cron', cron,  max_instances=max_instances, enable=enable,
                    misfire_grace_time=misfire_grace_time, coalesce=coalesce,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)
 
 
 def interval_job(name, weeks=0, days=0, hours=0, minutes=0, seconds=0, start_date=None, end_date=None,
-                 max_instances=1, misfire_grace_time=2, coalesce=False,
+                 max_instances=1, misfire_grace_time=2, coalesce=False, enable=True,
                  log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     interval_exp = json.dumps({"weeks":weeks,"days":days,"hours":hours,"minutes":minutes,"seconds":seconds,
                                "start_date":start_date,"end_date":end_date,})
     return __x_job(name, 'interval', interval_exp, max_instances=max_instances,
-                   misfire_grace_time=misfire_grace_time, coalesce=coalesce,
+                   misfire_grace_time=misfire_grace_time, coalesce=coalesce, enable=enable,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)
 
 
-def once_job(name, run_at,  max_instances=1, misfire_grace_time=2, coalesce=False,
+def once_job(name, run_at,  max_instances=1, misfire_grace_time=2, coalesce=False, enable=True,
              log_succ_interval=0, log_err_interval=0, description=None, args=None, kwargs=None):
     return __x_job(name, 'once', run_at, max_instances=max_instances,
-                   misfire_grace_time=misfire_grace_time, coalesce=coalesce,
+                   misfire_grace_time=misfire_grace_time, coalesce=coalesce, enable=enable,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)
 
 
-def boot_job(name, description=None, args=None, kwargs=None):
+def boot_job(name, enable=True, description=None, args=None, kwargs=None):
     API_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
     run_at = datetime.now().strftime(API_DATE_FORMAT)
-    return __x_job(name, 'boot_once', run_at, description=description, args=args, kwargs=kwargs)
+    return __x_job(name, 'boot_once', run_at, enable=enable, description=description, args=args, kwargs=kwargs)
 
 
-def delayed_job(name, retry=3, description=None):
+def delayed_job(name, retry=3, enable=True, description=None):
     """
     id: 保证对同一个func唯一性
     nonce: 全局唯一，可用来保证幂等性
@@ -89,7 +89,6 @@ def delayed_job(name, retry=3, description=None):
     def inner(func):
         @functools.wraps(func)
         def real_func(*args, **kwargs):
-            job_id = id
             mod_func = f"{inspect.getmodule(func).__name__}.{func.__name__}"
             job_parameters = {
                 'args': tuple(args) if args is not None else (),
@@ -97,7 +96,7 @@ def delayed_job(name, retry=3, description=None):
             }
             values = {"job_name": name, "description": description,
                       "job_function": mod_func, "job_parameters": json.dumps(job_parameters),
-                      "retry":retry,
+                      "retry":retry, "enable":enable,
                        }
             DelayedJob.objects.create(**values)
 
