@@ -1,5 +1,6 @@
 import functools, inspect
 import logging, hashlib, json
+from datetime import datetime
 from background_job.models import DjangoJob, DelayedJob
 
 logger = logging.getLogger(__name__)
@@ -33,7 +34,7 @@ def __x_job(name, trigger_type, trigger_exp,  max_instances=1, misfire_grace_tim
 
         @functools.wraps(func)
         def real_func(*args, **kwargs):
-            func(*args, **kwargs)
+            return func(*args, **kwargs)
         return real_func
     return inner
 
@@ -70,6 +71,12 @@ def once_job(name, run_at,  max_instances=1, misfire_grace_time=2, coalesce=Fals
                    misfire_grace_time=misfire_grace_time, coalesce=coalesce,
                    log_succ_interval=log_succ_interval, log_err_interval=log_err_interval,
                    description=description, args=args, kwargs=kwargs)
+
+
+def boot_job(name, description=None, args=None, kwargs=None):
+    API_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+    run_at = datetime.now().strftime(API_DATE_FORMAT)
+    return __x_job(name, 'boot_once', run_at, description=description, args=args, kwargs=kwargs)
 
 
 def delayed_job(name, retry=3, description=None):

@@ -4,16 +4,6 @@ from queue import Queue
 from concurrent.futures import ThreadPoolExecutor, Future
 import importlib, json, logging
 import multiprocessing
-from functools import partial
-
-
-def _picklable_func(func, *args, **kwargs):
-    """
-    再封装一次的原因如下
-    https://stackoverflow.com/questions/49899351/restrictions-on-dynamically-created-functions-with-concurrent-futures-processpoo
-    """
-    myfunc = partial(func, *args)
-    return myfunc
 
 
 class JobProcessor(threading.Thread):
@@ -35,7 +25,22 @@ class JobProcessor(threading.Thread):
                 self.LOGGER.exception(e)
                 # TODO log db error
 
-    def call_succ(self, future:Future):  # TODO exception
+    def __call(self, job_id, function_string, *args, **kwargs):
+        """
+
+        """
+        try:
+            mod_name, func_name = function_string.rsplit('.', 1)
+            mod = importlib.import_module(mod_name)
+            func = getattr(mod, func_name)
+            future = self.threadpool.submit(func, *args, **kwargs)
+            future.job_id=job_id
+            future.add_done_callback(self.__call_succ)
+        except Exception as e:
+            self.LOGGER.exception(e)
+            # TODO log it
+
+    def __call_succ(self, future: Future):  # TODO exception
         """
 
         """
@@ -51,19 +56,4 @@ class JobProcessor(threading.Thread):
                 result = future.result()
                 self.LOGGER.info(">>>>%s", result)
                 # TODO log db，含函数结果
-        self.LOGGER.info("%s, %s", future.function_string, future.result())
-
-    def __call(self, job_id, function_string, *args, **kwargs):
-        """
-
-        """
-        try:
-            mod_name, func_name = function_string.rsplit('.', 1)
-            mod = importlib.import_module(mod_name)
-            func = getattr(mod, func_name)
-            future = self.threadpool.submit(_picklable_func(func, *args, **kwargs),  **kwargs)
-            future.function_string=function_string
-            future.add_done_callback(self.call_succ)
-        except Exception as e:
-            self.LOGGER.exception(e)
-            # TODO log it
+        self.LOGGER.info("%s, %s", future.job_id, future.result())

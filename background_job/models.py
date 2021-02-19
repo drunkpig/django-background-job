@@ -19,7 +19,7 @@ class DjangoJob(models.Model):
     job_function = models.CharField(max_length=128, )  # 任务的函数名称
     job_parameters = models.TextField(blank=True, )
     trigger_type = models.CharField(max_length=128, choices=[["cron","cron"],["interval",'interval'],
-                                                         ['once','once']]) # cron, delayedjob, interval, once
+                                                         ['once','once'],['boot_once','boot_once']]) # cron, delayedjob, interval, once
     trigger_expression = models.CharField(max_length=128) # cron表达式
     max_instances = models.IntegerField(default=1)
     misfire_grace_time = models.IntegerField(default=0)
@@ -47,6 +47,11 @@ class DjangoJob(models.Model):
             trigger: OnceJobTrigger = OnceJobTrigger(self.trigger_expression)
             seconds, dt = trigger.get_next_fire_time()
             return seconds, dt
+        elif self.trigger_type=='boot_once':
+            delay_seconds = 10
+            delta = datetime.timedelta(seconds=delay_seconds)
+            dt = datetime.datetime.now()+delta
+            return delay_seconds, dt
         else:
             raise Exception("*********没有实现的trigger type")# TODO 根据 trigger_type
 
