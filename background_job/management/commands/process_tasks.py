@@ -22,8 +22,6 @@ class Command(BaseCommand):
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
-        # self.sig_manager = None
-        # self._tasks = tasks
 
     def run(self, *args, **options):
         autodiscover()

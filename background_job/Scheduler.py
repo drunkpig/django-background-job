@@ -7,8 +7,6 @@ from queue import Queue
 
 import sched
 
-from django.db.models import Max
-
 from background_job.models import DjangoJob
 from background_job.utils import get_max_job_version
 

@@ -7,9 +7,9 @@ def my_func3():
     return "this is func3"
 
 
-# @cron_job(name="my_func", cron="*/2 * * * *", args=('X parameter',), kwargs={"name":"Jin", "age":23})
-# def my_func(x, name="Jos", age=20):
-#     print(f"my_func(x={x}, name={name}, age={age})")
+@cron_job(name="my_func", cron="*/2 * * * *", args=('X parameter',), kwargs={"name":"Jin", "age":23})
+def my_func(x, name="Jos", age=20):
+    print(f"my_func(x={x}, name={name}, age={age})")
 
 
 @boot_job(name="my_func2", )
@@ -17,7 +17,7 @@ def my_func2():
     print("my_func2()")
 
 
-@interval_job(name="间隔执行", enable=False, seconds=5, args=('NAME',"VALUE"))
+@interval_job(name="间隔执行", enable=True, seconds=5, args=('NAME',"VALUE"))
 def interval_func(name, value):
     print(f"interval_func({name}, {value})")
     return "interval_func ************************"
