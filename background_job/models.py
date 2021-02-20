@@ -15,6 +15,7 @@ class DjangoJob(models.Model):
     """
     id = models.CharField(max_length=64, primary_key=True)
     job_name = models.CharField(max_length=128)  # 任务名字
+    version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     enable = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)  # job作用描述
     job_function = models.CharField(max_length=128, )  # 任务的函数名称
@@ -60,6 +61,7 @@ class DjangoJob(models.Model):
 class DelayedJob(models.Model):
     id = models.AutoField(primary_key=True)
     job_name = models.CharField(max_length=128)  # 任务名字
+    version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     enable = models.BooleanField(default=True)
     description = models.TextField(blank=True, null=True)  # job作用描述
     job_function = models.CharField(max_length=128, )  # 任务的函数名称
@@ -88,6 +90,7 @@ class JobExecHistory(models.Model):
     id = models.AutoField(primary_key=True)
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
+    version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     status = models.CharField(max_length=50, choices=[
         [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR]
     ])
@@ -100,6 +103,7 @@ class JobExecHistory(models.Model):
 
     def html_status(self):
         m = {
+            self.NEW: "gray",
             self.RUNNING: "blue",
             # self.MAX_INSTANCES: "yellow",
             # self.MISSED: "yellow",

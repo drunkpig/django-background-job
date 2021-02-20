@@ -2,8 +2,12 @@ import functools, inspect
 import logging, hashlib, json
 from datetime import datetime
 from background_job.models import DjangoJob, DelayedJob
+from background_job.utils import get_max_job_version
 
 logger = logging.getLogger(__name__)
+
+
+JOB_VERSION = get_max_job_version() + 1
 
 
 def md5(astring):
@@ -25,7 +29,7 @@ def __x_job(name,  trigger_type, trigger_exp, enable=True,  max_instances=1, mis
         }
         values = { "job_name":name, "description":description,
                    "job_function":mod_func, "trigger_type":trigger_type, "enable":enable,
-                   "job_parameters":json.dumps(job_parameters),
+                   "job_parameters":json.dumps(job_parameters), "version":JOB_VERSION,
                    "trigger_expression":trigger_exp, "max_instances":max_instances,
                     "misfire_grace_time":misfire_grace_time, "coalesce":coalesce,
                    "log_succ_interval":log_succ_interval, "log_err_interval":log_err_interval,}
@@ -96,7 +100,7 @@ def delayed_job(name, retry=3, enable=True, description=None):
             }
             values = {"job_name": name, "description": description,
                       "job_function": mod_func, "job_parameters": json.dumps(job_parameters),
-                      "retry":retry, "enable":enable,
+                      "retry":retry, "enable":enable, "version":JOB_VERSION,
                        }
             DelayedJob.objects.create(**values)
 

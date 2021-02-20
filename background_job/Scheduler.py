@@ -7,7 +7,10 @@ from queue import Queue
 
 import sched
 
+from django.db.models import Max
+
 from background_job.models import DjangoJob
+from background_job.utils import get_max_job_version
 
 logger = logging.getLogger()
 
@@ -22,7 +25,8 @@ class Scheduler(threading.Thread):
         self.timer = sched.scheduler(time.time, time.sleep)
 
     def __load_jobs(self):
-        jobs = DjangoJob.objects.all()
+        self.max_version = get_max_job_version()
+        jobs = DjangoJob.objects.filter(enable=True, version=self.max_version).all()
         self.job_list = jobs
 
     def run(self):
@@ -30,12 +34,13 @@ class Scheduler(threading.Thread):
             logger.info("no task to schedule")
         else:
             for job in self.job_list:
-                if job.trigger_type in ['cron', 'interval']:
-                    self.__lunch_periodical_job(job)
-                elif job.trigger_type=='once':
-                    self.__lunch_once_job(job)
-                else:
-                    self.__lunch_once_boot_job(job)
+                if job.enable:
+                    if job.trigger_type in ['cron', 'interval']:
+                        self.__lunch_periodical_job(job)
+                    elif job.trigger_type=='once':
+                        self.__lunch_once_job(job)
+                    else:
+                        self.__lunch_once_boot_job(job)
         while True:
             self.timer.run(blocking=True)
             logger.warning("调度无任务，暂时休眠")
