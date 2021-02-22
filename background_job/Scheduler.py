@@ -23,9 +23,12 @@ class Scheduler(threading.Thread):
         self.timer = sched.scheduler(time.time, time.sleep)
 
     def __load_jobs(self):
+        self.job_list = self.__get_all_jobs()
+
+    def __get_all_jobs(self):
         self.max_version = get_max_job_version()
         jobs = DjangoJob.objects.filter(enable=True, version=self.max_version).all()
-        self.job_list = jobs
+        return jobs
 
     def run(self):
         if len(self.job_list)<=0:
@@ -39,10 +42,18 @@ class Scheduler(threading.Thread):
                         self.__lunch_once_job(job)
                     else:
                         self.__lunch_once_boot_job(job)
+        self.timer.enter(60, 1, self.__reload_job) # 更新job
         while True:
             self.timer.run(blocking=True)
             logger.warning("调度无任务，暂时休眠")
             time.sleep(1)
+
+    def __reload_job(self):
+        """
+        新增、删除、更改了
+
+        """
+        
 
     def __lunch_periodical_job(self, job):
         seconds_to_wait, _ = job.next_run_time()
@@ -53,7 +64,8 @@ class Scheduler(threading.Thread):
             logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait, job.misfire_grace_time)
             return
         logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
-        self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job, ))
+        evt = self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job, ))
+        job.evt = evt
 
     def __lunch_once_job(self, job):
         seconds_to_wait, _ = job.next_run_time()
