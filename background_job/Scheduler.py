@@ -5,7 +5,9 @@ import threading
 import time
 from queue import Queue
 
-import sched
+import sched, datetime
+
+from django.db.models import Max
 
 from background_job.models import DjangoJob
 from background_job.utils import get_max_job_version
@@ -20,21 +22,34 @@ class Scheduler(threading.Thread):
         self.queue = queue
         # load from db
         self.__load_jobs()
+        self.max_update_tm = self.__get_max_update_tm()
         self.timer = sched.scheduler(time.time, time.sleep)
 
     def __load_jobs(self):
-        self.job_list = self.__get_all_jobs()
+        jobs = self.__get_all_jobs()
+        job_list = {}
+        if jobs:
+            for j in job_list:
+                job_list[j.id] = j
+        self.job_list = job_list
 
     def __get_all_jobs(self):
         self.max_version = get_max_job_version()
         jobs = DjangoJob.objects.filter(enable=True, version=self.max_version).all()
         return jobs
 
+    def __get_max_update_tm(self):
+        x = DjangoJob.objects.aggregate(Max('gmt_update'))
+        if x:
+            return x['gmt_update__max']
+        else:
+            return datetime.datetime.now()
+
     def run(self):
-        if len(self.job_list)<=0:
+        if len(self.job_list.keys())<=0:
             logger.info("no task to schedule")
         else:
-            for job in self.job_list:
+            for job in self.job_list.values():
                 if job.enable:
                     if job.trigger_type in ['cron', 'interval']:
                         self.__lunch_periodical_job(job)
@@ -53,7 +68,21 @@ class Scheduler(threading.Thread):
         新增、删除、更改了
 
         """
-        
+        jobs = DjangoJob.objects.filter(version=self.max_version, gmt_update__gt=self.max_update_tm).all()
+        if jobs:
+            for j in jobs:
+                id = j.id
+                enable = j.enable
+                # 1, 删除，enable->disable, disable->enable
+                if enable and id not in self.job_list.keys():
+                    # 从disable -> enable, 新调度 
+                    if j.trigger_type in ['cron', 'interval']:
+                        self.__lunch_periodical_job(j)
+                        self.job_list[id] = j
+                elif not enable and id in self.job_list.keys():
+                    # 从enable ->disable #停止调度
+                    self.timer.cancel(self.job_list[id].evt)
+                # 删除无法感知，除非整体重新加载。
 
     def __lunch_periodical_job(self, job):
         seconds_to_wait, _ = job.next_run_time()
