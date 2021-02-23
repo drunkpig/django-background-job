@@ -28,13 +28,17 @@ def __x_job(name,  trigger_type, trigger_exp, enable=True,  max_instances=1, mis
                         'kwargs': dict(kwargs) if kwargs is not None else {},
         }
         values = { "job_name":name, "description":description,
-                   "job_function":mod_func, "trigger_type":trigger_type, "enable":enable,
+                   "job_function":mod_func, "trigger_type":trigger_type,
                    "job_parameters":json.dumps(job_parameters), "version":JOB_VERSION,
                    "trigger_expression":trigger_exp, "max_instances":max_instances,
                     "misfire_grace_time":misfire_grace_time, "coalesce":coalesce,
                    "log_succ_interval":log_succ_interval, "log_err_interval":log_err_interval,}
-        DjangoJob.objects.update_or_create(id=job_id,
+        obj, created  = DjangoJob.objects.update_or_create(id=job_id,
                                            defaults=values)
+        if created:
+            # 如果是新建，那么就把代码中的enable状态写入进去，否则保持手工修改的结果
+            obj.enable = enable
+            obj.save()
 
         @functools.wraps(func)
         def real_func(*args, **kwargs):

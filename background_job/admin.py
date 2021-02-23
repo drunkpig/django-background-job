@@ -11,7 +11,7 @@ from .models import DjangoJob, JobExecHistory, DelayedJob
 @admin.register(DjangoJob)
 class DjangoJobAdmin(admin.ModelAdmin):
     list_display = ["job_name_html",  "job_function",  "job_parameters",
-                    "trigger_type", "trigger_expression", "max_instances",
+                    "trigger_type", "trigger_expression", "enable","max_instances",
                     "misfire_grace_time", "coalesce",
                     "log_succ_interval","log_err_interval",
                     "gmt_update", "gmt_created"]

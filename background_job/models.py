@@ -82,8 +82,8 @@ class JobExecHistory(models.Model):
     """
     NEW = "New"
     RUNNING = "Running"
-    #MAX_INSTANCES = u"Max instances reached!"
-    #MISSED = u"Missed!"
+    MAX_INSTANCES = "Max instances reached!"
+    MISSED = "Missed!"
     ERROR = "Error!"
     SUCCESS = "Success"
 
@@ -92,7 +92,8 @@ class JobExecHistory(models.Model):
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
     version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     status = models.CharField(max_length=50, choices=[
-        [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR]
+        [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR],
+        [MAX_INSTANCES,MAX_INSTANCES],[MISSED,MISSED]
     ])
     result = models.TextField(blank=True, verbose_name="执行返回结果")
     start_tm = models.DateTimeField(auto_now_add=True)  # job开始时间
