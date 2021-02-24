@@ -2,7 +2,7 @@ import functools, inspect
 import logging, hashlib, json
 from datetime import datetime
 from background_job.models import DjangoJob, DelayedJob
-from background_job.utils import get_max_job_version
+from background_job.utils import get_max_job_version, log_action
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,9 @@ def __x_job(name,  trigger_type, trigger_exp, enable=True,  max_instances=1, mis
             # 如果是新建，那么就把代码中的enable状态写入进去，否则保持手工修改的结果
             obj.enable = enable
             obj.save()
+            log_action(f"create new job: {name}")
+        else:
+            log_action(f"update new job: {name}")
 
         @functools.wraps(func)
         def real_func(*args, **kwargs):

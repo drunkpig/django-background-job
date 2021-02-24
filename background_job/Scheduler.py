@@ -10,7 +10,7 @@ import sched, datetime
 from django.db.models import Max
 
 from background_job.models import DjangoJob, JobExecHistory
-from background_job.utils import get_max_job_version, log_job_history
+from background_job.utils import get_max_job_version, log_job_history, log_action
 
 logger = logging.getLogger()
 
@@ -32,6 +32,7 @@ class Scheduler(threading.Thread):
             for j in jobs:
                 job_list[j.id] = j
         self.job_list = job_list
+        log_action(f"load {len(self.job_list.keys())} jobs")
 
     def __get_all_jobs(self):
         self.max_version = get_max_job_version()
@@ -81,11 +82,12 @@ class Scheduler(threading.Thread):
                         self.job_list[id] = j
                         self.__lunch_periodical_job(j)
                         logger.info("enable job=%s", j.job_name)
-                        # TODO log switch log
+                        log_action(f"new enable job={j.job_name}")
                 elif enable and id in self.job_list.keys():
                     # enable -> disable ---> enable
                     self.job_list[id].enable = True
                     self.__lunch_periodical_job(self.job_list[id])
+                    log_action(f"disable->enable job={j.job_name}")
                 elif not enable and id in self.job_list.keys():
                     # 从enable ->disable #停止调度
                     self.job_list[id].enable = False
@@ -94,7 +96,7 @@ class Scheduler(threading.Thread):
                     self.job_list[id].job_function = j.job_function
                     self.job_list[id].trigger_expression = j.trigger_expression
                     logger.info("disable job=%s", j.job_name)
-                    # TODO log switch log
+                    log_action(f"disable job={j.job_name}")
                 # 删除无法感知，除非整体重新加载。
         else:
             logger.info("没有发现更新的job")

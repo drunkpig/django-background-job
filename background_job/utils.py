@@ -1,8 +1,8 @@
-import logging
+import logging, socket
 
 from django.db.models import Max
 
-from background_job.models import DjangoJob, JobExecHistory
+from background_job.models import DjangoJob, JobExecHistory, ActionLog
 
 logger = logging.getLogger()
 
@@ -31,5 +31,13 @@ def log_job_history_by_id(job_id, status, result=None, trace_message=None):
         JobExecHistory.objects.create(job=job, job_name=job.job_name, trigger_type=job.trigger_type,
                                       version=job.version, status=status, result=result, trace_message=trace_message,
                                       )
+    except Exception as e:
+        logger.exception(e)
+
+
+def log_action(action):
+    try:
+        host_name = socket.gethostname()
+        ActionLog.objects.create(action=action, op_host=host_name)
     except Exception as e:
         logger.exception(e)

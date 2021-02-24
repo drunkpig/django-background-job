@@ -5,7 +5,7 @@ from django.db.models import Avg
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.timezone import now
-from .models import DjangoJob, JobExecHistory, DelayedJob
+from .models import DjangoJob, JobExecHistory, DelayedJob, ActionLog
 
 
 @admin.register(DjangoJob)
@@ -42,3 +42,9 @@ class DelayedJobAdmin(admin.ModelAdmin):
 class DjangoJobExecAdmin(admin.ModelAdmin):
     list_display = ["id", "job_name",  "trace_message", "html_status", "duration", "start_tm", "end_tm"]
     list_filter = ["job_name",  "status"]
+
+
+@admin.register(ActionLog)
+class ActionLogAdmin(admin.ModelAdmin):
+    list_display = ["id", "action",  "op_host", "gmt_update", "gmt_created"]
+    list_filter = ["op_host"]

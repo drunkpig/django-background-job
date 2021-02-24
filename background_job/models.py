@@ -131,3 +131,11 @@ class JobExecHistory(models.Model):
 
     class Meta:
         ordering = ('-start_tm', )
+
+
+class ActionLog(models.Model):
+    id = models.AutoField(primary_key=True)
+    action = models.CharField(max_length=256, verbose_name="操作")  #
+    op_host = models.CharField(max_length=128, verbose_name="操作")  # 哪台设备的操作
+    gmt_update = models.DateTimeField(auto_now=True)  # 最后更新时间
+    gmt_created = models.DateTimeField(auto_now_add=True)  # 创建时间
