@@ -90,17 +90,16 @@ class JobExecHistory(models.Model):
     id = models.AutoField(primary_key=True)
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
-    trigger_type = models.CharField(max_length=128),
-
+    trigger_type = models.CharField(max_length=128, null=False, verbose_name="任务类型")
     version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     status = models.CharField(max_length=50, choices=[
         [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR],
         [MAX_INSTANCES,MAX_INSTANCES],[MISSED,MISSED]
     ])
-    result = models.TextField(blank=True, verbose_name="执行返回结果")
+    result = models.TextField(blank=True, null=True, verbose_name="执行返回结果")
     start_tm = models.DateTimeField(auto_now_add=True)  # job开始时间
     end_tm = models.DateTimeField(auto_now=True)  # 结束（成功|失败)时间
-    trace_message = models.TextField(blank=True, verbose_name="追踪日志") # 错误记录等
+    trace_message = models.TextField(blank=True, null=True, verbose_name="追踪日志") # 错误记录等
     gmt_update = models.DateTimeField(auto_now=True)  # 最后更新时间
     gmt_created = models.DateTimeField(auto_now_add=True)  # 创建时间
 

@@ -11,14 +11,15 @@ def get_max_job_version():
     max_version = DjangoJob.objects.aggregate(Max('version'))  # {'version__max': 5}
     if max_version:
         max_version = max_version['version__max']
-    else:
+    if max_version is None:
         max_version = 0
+
     return max_version
 
 
 def log_job_history(job:DjangoJob, status, result=None, trace_message=None):
     try:
-        JobExecHistory.objects.create(job=job, job_name=job.job_name, trigger_type=job.trigger_type,
+        JobExecHistory.objects.update_or_create(job=job, job_name=job.job_name, trigger_type=job.trigger_type,
                                       version=job.version, status=status, result=result, trace_message=trace_message,
                                       )
     except Exception as e:
