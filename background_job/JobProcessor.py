@@ -4,6 +4,9 @@ from concurrent.futures import ThreadPoolExecutor, Future
 import importlib, json, logging
 import multiprocessing
 
+from background_job.models import JobExecHistory
+from background_job.utils import log_job_history_by_id, log_job_history
+
 
 class JobProcessor(threading.Thread):
     LOGGER = logging.getLogger()
@@ -16,43 +19,47 @@ class JobProcessor(threading.Thread):
 
     def run(self):
         while True:
+            job = None
             try:
                 job = self.queue.get(block=True)
                 parameters = json.loads(job.job_parameters)
+                log_job_history(job, status=JobExecHistory.RUNNING, result=None, trace_message=None)
                 self.__call(job.id, job.job_function, *parameters['args'], **parameters['kwargs'])
+
             except Exception as e:
                 self.LOGGER.exception(e)
-                # TODO log db error
+                log_job_history(job, status=JobExecHistory.ERROR, result=None, trace_message=e)
 
     def __call(self, job_id, function_string, *args, **kwargs):
         """
 
         """
-        try:
-            mod_name, func_name = function_string.rsplit('.', 1)
-            mod = importlib.import_module(mod_name)
-            func = getattr(mod, func_name)
-            future = self.threadpool.submit(func, *args, **kwargs)
-            future.job_id = job_id
-            future.function_string = function_string
-            future.add_done_callback(self.__call_succ)
-        except Exception as e:
-            self.LOGGER.exception(e)
-            # TODO log it
+        mod_name, func_name = function_string.rsplit('.', 1)
+        mod = importlib.import_module(mod_name)
+        func = getattr(mod, func_name)
+        future = self.threadpool.submit(func, *args, **kwargs)
+        future.job_id = job_id
+        future.function_string = function_string
+        future.add_done_callback(self.__call_succ)
 
     def __call_succ(self, future: Future):  # TODO exception
         """
 
         """
-        if future.cancelled():
-            self.LOGGER.warning("%s cancelled", future.function_string)
-            # TODO log db
-        elif future.done():
-            error = future.exception()
-            if error:
-                self.LOGGER.error("%s ERROR: %s", future.function_string, error)
-                # TODO log db
-            else:
-                result = future.result()
-                self.LOGGER.info("%s return: %s", future.function_string, result)
-                # TODO log db，含函数结果
+        job_id = future.job_id
+        function_string = future.function_string
+        try:
+            if future.cancelled():
+                self.LOGGER.warning("%s cancelled", function_string)
+                log_job_history_by_id(job_id, status=JobExecHistory.MISSED, result=None, trace_message="job cancelled")
+            elif future.done():
+                error = future.exception()
+                if error:
+                    self.LOGGER.error("%s ERROR: %s", function_string, error)
+                    log_job_history_by_id(job_id, status=JobExecHistory.ERROR, result=None, trace_message=error)
+                else:
+                    result = future.result()
+                    self.LOGGER.info("%s return: %s", function_string, result)
+                    log_job_history_by_id(job_id, status=JobExecHistory.SUCCESS, result=result, trace_message=None)
+        except Exception as e:
+            self.LOGGER.exception(e)

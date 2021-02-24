@@ -91,6 +91,7 @@ class JobExecHistory(models.Model):
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
     trigger_type = models.CharField(max_length=128),
+
     version = models.IntegerField(blank=False, null=False)  # 版本，用于每次重启时选择最大版本运行
     status = models.CharField(max_length=50, choices=[
         [NEW,NEW],[RUNNING,RUNNING],[SUCCESS,SUCCESS],[ERROR,ERROR],

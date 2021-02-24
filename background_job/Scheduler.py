@@ -9,8 +9,8 @@ import sched, datetime
 
 from django.db.models import Max
 
-from background_job.models import DjangoJob
-from background_job.utils import get_max_job_version
+from background_job.models import DjangoJob, JobExecHistory
+from background_job.utils import get_max_job_version, log_job_history
 
 logger = logging.getLogger()
 
@@ -108,6 +108,7 @@ class Scheduler(threading.Thread):
         elif seconds_to_wait<0:
             # TODO 根据loglevel决定是否记录
             logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait, job.misfire_grace_time)
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=None)
             return
         logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
         evt = self.timer.enter(seconds_to_wait, 0, self.__fire_job, argument=(job, ))
@@ -118,11 +119,12 @@ class Scheduler(threading.Thread):
         if seconds_to_wait < 0 and abs(seconds_to_wait) <= job.misfire_grace_time:  # 是否在指定时间容错范围内可以执行
             seconds_to_wait = 0
         elif seconds_to_wait < 0:
-            # TODO 根据loglevel决定是否记录
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=f"delay ~ misfire_grace_time")
             logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait,
                         job.misfire_grace_time)
             return
         logger.info("task [%s] will invoke after [%f] seconds later", job.job_function, seconds_to_wait)
+
         self.timer.enter(seconds_to_wait, 0, self.__fire_once_job, argument=(job,))
 
     def __fire_once_job(self, job):
@@ -131,22 +133,24 @@ class Scheduler(threading.Thread):
     def __lunch_once_boot_job(self, job):
         try:
             self.queue.put_nowait(job)
+            log_job_history(job, status=JobExecHistory.NEW, result=None, trace_message=None)
         except queue.Full as e:
             logger.exception(e)
-            # TODO log job missed!
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=e)
         except Exception as e:
             logger.exception(e)
-            # TODO log job missed!
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=e)
 
     def __fire_job(self, job:DjangoJob):
         try:
             self.queue.put_nowait(job)
+            log_job_history(job, status=JobExecHistory.NEW, result=None, trace_message=None)
         except queue.Full as e:
             logger.exception(e)
-            # TODO log job missed!
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=e)
         except Exception as e:
             logger.exception(e)
-            # TODO log job missed!
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=e)
 
         seconds_to_wait,_ = job.next_run_time()
         if seconds_to_wait>0 or abs(seconds_to_wait) <= job.misfire_grace_time:
@@ -156,4 +160,4 @@ class Scheduler(threading.Thread):
         else:
             logger.info("task [%s] missed! (delay, misfire_grace_time)=(%s, %s)", job.job_function, seconds_to_wait,
                         job.misfire_grace_time)
-            # TODO log job missed!
+            log_job_history(job, status=JobExecHistory.MISSED, result=None, trace_message=f"delay ~ misfire_grace_time")
