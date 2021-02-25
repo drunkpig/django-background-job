@@ -7,6 +7,8 @@ from django.utils.html import format_html
 from django.utils.timezone import now
 from .models import DjangoJob, JobExecHistory, DelayedJob, ActionLog
 
+admin.ModelAdmin.list_per_page = 20
+
 
 @admin.register(DjangoJob)
 class DjangoJobAdmin(admin.ModelAdmin):
@@ -40,7 +42,7 @@ class DelayedJobAdmin(admin.ModelAdmin):
 
 @admin.register(JobExecHistory)
 class DjangoJobExecAdmin(admin.ModelAdmin):
-    list_display = ["id", "job_name",  "trace_message", "html_status", "duration", "start_tm", "end_tm"]
+    list_display = ["job_name", "result", "trace_message", "html_status", "duration", "start_tm", "end_tm"]
     list_filter = ["job_name",  "status"]
 
 

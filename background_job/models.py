@@ -1,5 +1,7 @@
+import copy
 import datetime
 import json
+import uuid
 
 from django.db import models
 
@@ -34,6 +36,11 @@ class DjangoJob(models.Model):
 
     class Meta:
         ordering = ('gmt_update', )
+
+    def instance(self):
+        instance = copy.copy(self)
+        instance.instance_id = str(uuid.uuid4())
+        return instance
 
     def next_run_time(self):
         if self.trigger_type=='cron':
@@ -86,8 +93,8 @@ class JobExecHistory(models.Model):
     MISSED = "Missed!"
     ERROR = "Error!"
     SUCCESS = "Success"
-
-    id = models.AutoField(primary_key=True)
+    #id = models.AutoField(primary_key=True)
+    id = models.CharField(max_length=64, primary_key=True)
     job = models.ForeignKey(DjangoJob, on_delete=models.CASCADE)
     job_name = models.CharField(max_length=128, verbose_name="任务名称")  # 任务名字
     trigger_type = models.CharField(max_length=128, null=False, verbose_name="任务类型")
@@ -107,8 +114,8 @@ class JobExecHistory(models.Model):
         m = {
             self.NEW: "gray",
             self.RUNNING: "blue",
-            # self.MAX_INSTANCES: "yellow",
-            # self.MISSED: "yellow",
+            self.MAX_INSTANCES: "yellow",
+            self.MISSED: "yellow",
             self.ERROR: "red",
             self.SUCCESS: "green"
         }
@@ -117,6 +124,7 @@ class JobExecHistory(models.Model):
             m[self.status],
             self.status
         ))
+    html_status.verbose_name="任务状态"
 
     def duration(self):
         """
@@ -135,6 +143,6 @@ class JobExecHistory(models.Model):
 class ActionLog(models.Model):
     id = models.AutoField(primary_key=True)
     action = models.CharField(max_length=256, verbose_name="操作")  #
-    op_host = models.CharField(max_length=128, verbose_name="操作")  # 哪台设备的操作
+    op_host = models.CharField(max_length=128, verbose_name="操作来源")  # 哪台设备的操作
     gmt_update = models.DateTimeField(auto_now=True)  # 最后更新时间
     gmt_created = models.DateTimeField(auto_now_add=True)  # 创建时间

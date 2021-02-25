@@ -17,21 +17,27 @@ def get_max_job_version():
     return max_version
 
 
-def log_job_history(job:DjangoJob, status, result=None, trace_message=None):
+def log_job_history(job, status, result=None, trace_message=None):
+    logger.info(f"job name={job.job_name}, status ={status}, instance_id={job.instance_id}")
     try:
-        JobExecHistory.objects.update_or_create(job=job, job_name=job.job_name, trigger_type=job.trigger_type,
-                                      version=job.version, status=status, result=result, trace_message=trace_message,
-                                      )
+        id = job.instance_id
+        values = {"job_name":job.job_name, "job":job, "trigger_type":job.trigger_type,
+                  "version":job.version, "status":status, "result":result, "trace_message":trace_message}
+        JobExecHistory.objects.update_or_create(id=id, defaults=values)
     except Exception as e:
         logger.exception(e)
+        logger.error(f"job name={job.job_name}, status ={status}, instance_id={job.instance_id}")
 
 
-def log_job_history_by_id(job_id, status, result=None, trace_message=None):
+def log_job_history_by_id(job_id, job_instance_id, status, result=None, trace_message=None):
+    logger.info(f"job name={job_id}, status ={status}, instance_id={job_instance_id}")
     try:
+        id = job_instance_id
         job = DjangoJob.objects.get(id=job_id)
-        JobExecHistory.objects.create(job=job, job_name=job.job_name, trigger_type=job.trigger_type,
-                                      version=job.version, status=status, result=result, trace_message=trace_message,
-                                      )
+        values = {"job_name": job.job_name, "job": job, "trigger_type": job.trigger_type,
+                  "version": job.version, "status": status, "result": result, "trace_message": trace_message}
+
+        JobExecHistory.objects.update_or_create(id=id, defaults=values)
     except Exception as e:
         logger.exception(e)
 

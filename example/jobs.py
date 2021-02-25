@@ -17,7 +17,7 @@ def my_func2():
     print("my_func2()")
 
 
-@interval_job(name="间隔执行", enable=True, seconds=5, args=('NAME',"VALUE"))
+@interval_job(name="间隔执行", enable=True, seconds=10, args=('NAME',"VALUE"))
 def interval_func(name, value):
     print(f"interval_func({name}, {value})")
     return "interval_func ************************"

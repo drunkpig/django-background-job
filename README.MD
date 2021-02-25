@@ -31,8 +31,9 @@ include all features of apscheduler and django-apscheduler, but more than that:
 3. 
 
 ## TODO
-- 线程池
-- misfire_grace_time
+- 根据log要求记录到db
+- 根据django配置决定线程
+- missed的情况要根据历史记录
 - 合并执行 collease
 - 并行度 mx_instance
-- 异常, 任务隔离，记录异常
+- 事务性delayedjob

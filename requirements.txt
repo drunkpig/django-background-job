@@ -1,3 +1,4 @@
 apscheduler
 crontab
 django
+psycopg2-binary

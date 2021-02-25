@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+
+import psycopg2
 from django.conf.locale.zh_Hans import formats as dt_formats
 
 dt_formats.DATETIME_FORMAT = "Y-m-d H:i:s"
@@ -76,12 +78,30 @@ WSGI_APPLICATION = 'django_background_job.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
+DB_NAME='django_background_job'
+DB_USER='postgres'
+DB_PSW='@#!Wh0syourdaddy'
+DB_HOST='gw.mkmerich.com'
+DB_PORT='10006'
 DATABASES = {
-    'default': {
+    'default1': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': str(os.path.join(BASE_DIR, "db.sqlite3"))
-    }
+    },
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': DB_NAME,
+        'USER': DB_USER,
+        'PASSWORD': DB_PSW,
+        'HOST': DB_HOST,
+        'PORT': DB_PORT,
+        'OPTIONS': {
+            'isolation_level': psycopg2.extensions.ISOLATION_LEVEL_REPEATABLE_READ,
+        },
+        'TEST': {
+            'NAME': 'ssmrg',
+        },
+    },
 }
 
 
