@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='django-apscheduler-ng',
+    name='django-background-job',
     version='0.0.1',
     description='APScheduler for Django',
     classifiers=[
