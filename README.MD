@@ -36,4 +36,4 @@ include all features of apscheduler and django-apscheduler, but more than that:
 - missed的情况要根据历史记录
 - 合并执行 collease
 - 并行度 mx_instance
-- 事务性delayedjob
+- 事务性 delayedjob
